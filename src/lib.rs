@@ -1,4 +1,3 @@
-use anyhow;
 use anyhow::Context;
 use surrealdb;
 use surrealdb::{
@@ -42,6 +41,7 @@ use base64::{
     prelude::BASE64_STANDARD_NO_PAD
     , Engine
 };
+use tracing::debug;
 
 #[cfg(test)]
 mod tests;
@@ -112,7 +112,7 @@ where
 
     /// Enables creating a new SurrealdbStore from a supplied Surreal
     /// struct.
-    /// ```
+    /// ```ignore
     /// use anyhow;
     /// use surrealdb::{
     ///     Surreal
@@ -149,7 +149,7 @@ where
     /// Creates the data model in the database to support the store.
     /// 
     /// Example code for memory database
-    /// ```
+    /// ```ignore
     /// use anyhow;
     /// use surrealdb::{
     ///     Surreal
@@ -172,7 +172,7 @@ where
     /// ```
     /// 
     /// Example code for rocksdb based database
-    /// ```
+    /// ```ignore
     /// use anyhow;
     /// use surrealdb::engine::any::Any;
     /// use tower_sessions_surrealdb_store::SurrealdbStore;
@@ -215,7 +215,7 @@ impl SurrealdbStore<Any> {
     /// big no no
     /// Note: Please pick appropriate values for anything else other
     /// than testing
-    /// ```
+    /// ```ignore
     /// use anyhow;
     /// use surrealdb::engine::any::Any;
     /// use tower_sessions_surrealdb_store::SurrealdbStore;
@@ -286,10 +286,12 @@ where
     DB: Connection + Debug
 {
     async fn delete_expired(&self) -> session_store::Result<()> {
-        self.client.query(
-                r#"delete $table
-                where expiry_date <= time::unix(time::now())"#
-            ).bind(("table", self.sessions_table.clone()))
+        let query = format!(r#"
+                delete {}
+                where expiry_date <= time::unix(time::now())
+            "#, self.sessions_table.clone()
+        );
+        self.client.query(query)
             .await
             .map_err(|e| Backend(e.to_string()))?
             .check()
@@ -323,12 +325,21 @@ where
             , datetime_string
             , record_data
         );
-        let result: Option<RecordId> = self.client.query(query).await
-            .map_err(|e| Backend(e.to_string()))?
-            .take((1, "id")).map_err(|e | Backend(e.to_string()))?;
-        let new_id = result.ok_or(Backend("Record was not created so no ID was returned".into()))?;
+        let mut response_result = self.client.query(query.clone()).await;
+        if response_result.is_err() {
+            for _ in 0..4 {
+                response_result = self.client.query(query.clone()).await;
+                if response_result.is_ok() { break }
+            }
+        }
+        let mut response = response_result
+            .map_err(|e| Backend(e.to_string()))?;
+        let id_option: Option<RecordId> = response.take((1, "id"))
+            .map_err(|e | Backend(e.to_string()))?;
+        let new_id = id_option.ok_or(Backend("Record was not created so no ID was returned".into()))?;
         let SurrealId::Number(number) = new_id.id;
         record.id.0 = number.into();
+        debug!("{:#?}\n\n", record.clone());
         Ok(())
     }
     

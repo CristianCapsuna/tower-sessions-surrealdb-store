@@ -16,3 +16,6 @@ surrealdb = { version = "2.1.4", features = ["kv-mem"]}
 time = { version = "0.3.37", features = ["formatting", "parsing"] }
 tokio = "1.42.0"
 tower-sessions = "0.14.0"
+tracing = "0.1.41"
+tracing-appender = "0.2.3"
+tracing-subscriber = "0.3.19"
