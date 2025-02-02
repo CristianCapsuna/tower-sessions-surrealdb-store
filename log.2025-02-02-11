@@ -1,0 +1,25 @@
+[2m2025-02-02T11:06:39.424601Z[0m [34mDEBUG[0m [2mtower_sessions_surrealdb_store::tests[0m[2m:[0m Logger initialised
+[2m2025-02-02T11:06:39.425711Z[0m [34mDEBUG[0m [2mtungstenite::handshake::client[0m[2m:[0m Client handshake done.    
+[2m2025-02-02T11:06:39.425721Z[0m [34mDEBUG[0m [2mtungstenite::handshake::client[0m[2m:[0m Client handshake done.    
+[2m2025-02-02T11:06:39.441977Z[0m [34mDEBUG[0m [2mtower_sessions_surrealdb_store[0m[2m:[0m Record {
+    id: Id(
+        42,
+    ),
+    data: {
+        "test_key_1": String("test_value_1"),
+    },
+    expiry_date: 2025-02-09 11:06:39.441110496 +00:00:00,
+}
+
+
+[2m2025-02-02T11:06:39.441981Z[0m [34mDEBUG[0m [2mtower_sessions_surrealdb_store[0m[2m:[0m Record {
+    id: Id(
+        42,
+    ),
+    data: {
+        "test_key_2": String("test_value_2"),
+    },
+    expiry_date: 2025-02-02 11:01:39.441114276 +00:00:00,
+}
+
+
